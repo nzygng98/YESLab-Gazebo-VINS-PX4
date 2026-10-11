@@ -1,0 +1,17 @@
+%YAML:1.0
+---
+# 左目标定 —— 取自 XTDrone 官方 cam0_pinhole_p1.yaml (与 Gazebo stereo_camera 模型一致)
+model_type: PINHOLE
+camera_name: camera
+image_width: 752
+image_height: 480
+distortion_parameters:
+   k1: 0.0
+   k2: 0.0
+   p1: 5e-5
+   p2: -1e-4
+projection_parameters:
+   fx: 376
+   fy: 376
+   cx: 376
+   cy: 240

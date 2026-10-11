@@ -1,0 +1,138 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="stereo_camera">
+    <link name="link">
+      <pose>0 0 0 0 0 0</pose>
+      <inertial>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>0.00000166667</ixx>
+          <iyy>0.00000166667</iyy>
+          <izz>0.00000166667</izz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.015 0.1 0.02</size>
+          </box>
+        </geometry>
+      </visual>
+
+      <!-- ===================================================================
+           FIX (2026-10-09): Gazebo 11.15.1 不支持 type="multicamera"
+             gzserver 报: [Wrn] [msgs.cc:1844] Conversion of sensor type
+                          [multicamera] not supported.
+             -> 传感器永不产帧 -> ROS 侧无图像 -> VINS 卡 waiting for image
+           改为两个独立 type="camera" 传感器 + libgazebo_ros_camera.so
+           输出话题与原 multicamera 版完全一致:
+             /iris_0/stereo_camera/left/image_raw
+             /iris_0/stereo_camera/right/image_raw
+           备份: model.sdf.multicamera_orig
+           =================================================================== -->
+
+      <!-- 左目 (left camera) -->
+      <sensor name="camera_left" type="camera">
+        <always_on>1</always_on>
+        <update_rate>10</update_rate>
+        <visualize>false</visualize>
+        <camera name="left">
+          <pose>0 0.06 0 0 0 0</pose>
+          <horizontal_fov>1.5708</horizontal_fov>
+          <image>
+            <width>752</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>300</far>
+          </clip>
+        </camera>
+        <plugin name="camera_controller_left" filename="libgazebo_ros_camera.so">
+          <robotNamespace>/iris_0</robotNamespace>
+          <cameraName>stereo_camera/left</cameraName>
+          <alwaysOn>true</alwaysOn>
+          <updateRate>10</updateRate>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>stereo_camera_left_frame</frameName>
+          <hackBaseline>0.12</hackBaseline>
+          <Fx>376.0</Fx>
+          <Fy>376.0</Fy>
+          <Cx>376.0</Cx>
+          <Cy>240.0</Cy>
+          <distortionK1>0.0</distortionK1>
+          <distortionK2>0.0</distortionK2>
+          <distortionK3>0.0</distortionK3>
+          <distortionT1>5e-5</distortionT1>
+          <distortionT2>-1e-4</distortionT2>
+        </plugin>
+      </sensor>
+
+      <!-- 右目 (right camera) -->
+      <sensor name="camera_right" type="camera">
+        <always_on>1</always_on>
+        <update_rate>10</update_rate>
+        <visualize>false</visualize>
+        <camera name="right">
+          <pose>0 -0.06 0 0 0 0</pose>
+          <horizontal_fov>1.5708</horizontal_fov>
+          <image>
+            <width>752</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>300</far>
+          </clip>
+        </camera>
+        <plugin name="camera_controller_right" filename="libgazebo_ros_camera.so">
+          <robotNamespace>/iris_0</robotNamespace>
+          <cameraName>stereo_camera/right</cameraName>
+          <alwaysOn>true</alwaysOn>
+          <updateRate>10</updateRate>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>stereo_camera_right_frame</frameName>
+          <hackBaseline>0.12</hackBaseline>
+          <Fx>376.0</Fx>
+          <Fy>376.0</Fy>
+          <Cx>376.0</Cx>
+          <Cy>240.0</Cy>
+          <distortionK1>0.0</distortionK1>
+          <distortionK2>0.0</distortionK2>
+          <distortionK3>0.0</distortionK3>
+          <distortionT1>5e-5</distortionT1>
+          <distortionT2>-1e-4</distortionT2>
+        </plugin>
+      </sensor>
+    
+      <!-- IMU 传感器: 与双目同一刚体, 保证 VINS 的图/IMU 严格同步 -->
+      <sensor name="imu_sensor" type="imu">
+        <always_on>true</always_on>
+        <update_rate>200</update_rate>
+        <visualize>false</visualize>
+        <topic>imu_gazebo</topic>
+        <pose>0 0 0.3 0 0 0</pose>
+        <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+          <robotNamespace>/iris_0</robotNamespace>
+          <topicName>imu_gazebo</topicName>
+          <bodyName>imu_link_stereo</bodyName>
+          <updateRateHZ>200.0</updateRateHZ>
+          <gaussianNoise>0.0</gaussianNoise>
+          <xyzOffset>0 0 0</xyzOffset>
+          <rpyOffset>0 0 0</rpyOffset>
+          <frameName>imu_link_stereo</frameName>
+          <gyroscopeNoiseDensity>0.0006</gyroscopeNoiseDensity>
+          <gyroscopeRandomWalk>0.000003</gyroscopeRandomWalk>
+          <gyroscopeTurnOnBiasSigma>0.03</gyroscopeTurnOnBiasSigma>
+          <accelerometerNoiseDensity>0.002</accelerometerNoiseDensity>
+          <accelerometerRandomWalk>0.00002</accelerometerRandomWalk>
+          <accelerometerTurnOnBiasSigma>0.1</accelerometerTurnOnBiasSigma>
+        </plugin>
+      </sensor>
+    </link>
+  </model>
+</sdf>

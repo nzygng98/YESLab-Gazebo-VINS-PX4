@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- =====================================================================
+         indoor1_no_mavros.launch
+
+         与 ~/PX4-Autopilot/launch/indoor1.launch 完全相同,
+         唯一区别: 去掉了末尾内嵌的 mavros 块 (下面这个 include):
+
+             include file="$(find mavros)/launch/px4.launch"
+                arg name="fcu_url" value="udp://:14540@localhost:14580"
+
+         原因: indoor1.launch 会用 ns=iris_0 起一个 mavros, 它独占 UDP 14540。
+               若再用 2_mavros.sh 起第二个 mavros (同样绑 14540),
+               第二个会因端口被占用而拿不到链路。
+               本文件让「1_sim.sh 只负责 Gazebo + PX4 SITL」
+               与「2_mavros.sh 只负责 mavros」真正解耦。
+
+         用法:
+             roslaunch ~/scripts/indoor1_no_mavros.launch gui:=true
+
+         注意: 依赖 ROS_PACKAGE_PATH 里有 $PX4 与 $PX4/Tools/sitl_gazebo
+               (由 ~/.bashrc 的 PX4 SITL ENV 块提供)
+         ===================================================================== -->
+
+    <arg name="est" default="ekf2"/>
+    <arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/indoor1.world"/>
+    <!-- gazebo configs -->
+    <arg name="gui" default="true"/>
+    <arg name="debug" default="false"/>
+    <arg name="verbose" default="false"/>
+    <arg name="paused" default="false"/>
+
+    <!-- Gazebo sim -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="world_name" value="$(arg world)"/>
+        <arg name="debug" value="$(arg debug)"/>
+        <arg name="verbose" value="$(arg verbose)"/>
+        <arg name="paused" value="$(arg paused)"/>
+    </include>
+
+    <!-- iris_0 : PX4 SITL + spawn 机体(相机刚性挂机体) -->
+    <group ns="iris_0">
+        <arg name="ID" value="0"/>
+        <arg name="ID_in_group" value="0"/>
+        <include file="$(find px4)/launch/single_vehicle_spawn_xtd.launch">
+            <arg name="x" value="0"/>
+            <arg name="y" default="7.5"/>
+            <arg name="z" default="1"/>
+            <arg name="R" value="0"/>
+            <arg name="P" value="0"/>
+            <arg name="Y" value="0"/>
+            <arg name="vehicle" value="iris"/>
+            <arg name="sdf" value="iris_stereo_camera"/>
+            <arg name="mavlink_udp_port" value="18570"/>
+            <arg name="mavlink_tcp_port" value="4560"/>
+            <arg name="ID" value="$(arg ID)"/>
+            <arg name="ID_in_group" value="$(arg ID_in_group)"/>
+        </include>
+    </group>
+</launch>

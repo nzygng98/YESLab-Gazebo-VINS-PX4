@@ -1,0 +1,80 @@
+%YAML:1.0
+
+# =============================================================================
+#  XTDrone / PX4 SITL  双目 + IMU 配置 (VINS-Fusion)
+#  ★ 逐项对齐 XTDrone 官方权威值:
+#    XTDrone/sensing/slam/vio/VINS-Fusion/config/xtdrone_sitl/px4_sitl_stereo_imu_config.yaml
+#  唯一改动: output_path 用绝对路径(OpenCV 不解析 "~")
+# =============================================================================
+
+#common parameters
+#support: 1 imu 1 cam; 1 imu 2 cam: 2 cam;
+imu: 1
+num_of_cam: 2
+
+imu_topic: "/iris_0/imu_gazebo"
+image0_topic: "/iris_0/stereo_camera/left/image_raw"
+image1_topic: "/iris_0/stereo_camera/right/image_raw"
+output_path: "/home/nzyg/datasets/"
+
+cam0_calib: "cam0_pinhole_p1.yaml"
+cam1_calib: "cam1_pinhole_p1.yaml"
+image_width: 752
+image_height: 480
+
+
+# Extrinsic parameter between IMU and Camera.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+                        # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
+
+# 官方值: cam0 基线 0.12m; 相机与 IMU 的 z 差 -0.3m (IMU 在相机上方 0.3m)
+body_T_cam0: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data:  [0, 0, 1, 0,
+           -1, 0, 0, 0.12,
+           0, -1, 0, -0.3,
+           0, 0, 0, 1.]
+
+body_T_cam1: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data:  [0, 0, 1, 0,
+           -1, 0, 0, 0,
+           0, -1, 0, -0.3,
+           0, 0, 0, 1.]
+
+
+#Multiple thread support
+multiple_thread: 1
+
+#feature traker paprameters
+max_cnt: 150            # max feature number in feature tracking
+min_dist: 30            # min distance between two features
+freq: 80                # frequence (Hz) of publish tracking result.
+F_threshold: 1.0        # ransac threshold (pixel)
+show_track: 1           # publish tracking image as topic
+flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
+
+#optimization parameters
+max_solver_time: 0.04   # max solver itration time (ms), to guarantee real time
+max_num_iterations: 8   # max solver itrations, to guarantee real time
+keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
+
+#imu parameters       (官方值, 贴合 Gazebo 仿真真值)
+acc_n: 0.002            # accelerometer measurement noise standard deviation.
+gyr_n: 0.0006           # gyroscope measurement noise standard deviation.
+acc_w: 0.00002          # accelerometer bias random work noise standard deviation.
+gyr_w: 0.000003         # gyroscope bias random work noise standard deviation.
+g_norm: 9.81007         # gravity magnitude
+
+#unsynchronization parameters
+estimate_td: 0          # online estimate time offset between camera and imu
+td: 0.0                 # initial value of time offset. unit: s.
+
+#loop closure parameters
+load_previous_pose_graph: 0         # load and reuse previous pose graph
+pose_graph_save_path: "/home/nzyg/datasets/pose_graph/"   # 绝对路径
+save_image: 0                       # save image in pose graph for visualization purpose
