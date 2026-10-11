@@ -4,6 +4,12 @@
 > `Gazebo → 双目/IMU → VINS-Fusion → MAVROS → PX4 EKF2 → OFFBOARD 位置控制` 全链路。
 > 相机**刚性安装在机体上**，VIO 的视差来自机体真实飞行，**不使用任何 ground-truth 注入或脚本伪造位姿**。
 
+[![Demo Video](https://img.shields.io/badge/Demo-Video-blue)](video/demo_link.txt)
+[![mavros State](https://img.shields.io/badge/mavros-OFFBOARD%20%2B%20armed-success)](images/02_mavros_state_offboard_armed.jpg)
+[![Gazebo RTF](https://img.shields.io/badge/Gazebo%20RTF-0.98-brightgreen)](images/01_gazebo_cafe_rtf0.98_fps62.jpg)
+[![ROS Noetic](https://img.shields.io/badge/ROS-Noetic-22314E)](#)
+[![PX4](https://img.shields.io/badge/PX4-v1.13.3-orange)](#)
+
 ---
 
 ## 一、实验环境
@@ -495,3 +501,54 @@ https://github.com/nzygng98/YESLab-Gazebo-VINS-PX4/blob/main/284ce96eb0f00d7f7c7
    **未使用任何 ground-truth 注入**。若后续要纯视觉定位，可将
    `EKF2_AID_MASK` / `EKF2_HGT_MODE` 改为 vision 相关配置。
 7. `EKF2_HGT_MODE` 当前为 `0 (Baro)`，`EKF2_AID_MASK` 当前为 `1 (GPS)`。
+
+---
+
+## 十、实验截图（关键证据）
+
+四张截图存放在 [`images/`](images/)（原图也在仓库根目录）。完整说明见 [`images/README.md`](images/README.md)。
+
+### ① Gazebo `indoor1` 场景运行中 —— RTF 0.98 / FPS 62
+
+`header.stamp.secs = 2590`（**仿真时间非 0**），底部状态栏 `Real Time Factor: 0.98`、`Iterations: 841507`。
+
+![Gazebo indoor1 场景](images/01_gazebo_cafe_rtf0.98_fps62.jpg)
+
+### ② MAVROS 状态：`connected` / `armed` / `OFFBOARD`
+
+```yaml
+connected: True
+armed: True
+guided: False
+manual_input: False
+mode: "OFFBOARD"        ← ★ 位置闭环已生效
+system_status: 4
+```
+下方 `move_drone.py` 输出：「到位（偏差 0.245 m < 0.25）」。
+
+![mavros state OFFBOARD armed](images/02_mavros_state_offboard_armed.jpg)
+
+### ③ RViz 中的 VIO 轨迹与特征点
+
+网格地面上的**绿色轨迹** + 密集绿色特征点，`ROS Time: 3373.84`；下方「✅ [平移] 到位（偏差 0.229 m < 0.25）」。
+
+![RViz VIO trajectory](images/03_rviz_vio_trajectory.jpg)
+
+### ④ `/mavros/local_position/pose` 完整消息（已飞到 z = 1.4877 m）
+
+```yaml
+header:
+  seq: 58631
+  stamp: { secs: 2590, nsecs: 212118320 }
+  frame_id: "map"
+pose:
+  position: { x: 0.2552624046802521, y: 0.028867239132523537, z: 1.4876961708068848 }
+  orientation: { x: -0.0030785, y: -0.0047265, z: -4.2358e-05, w: -0.99998409 }
+```
+
+![local_position 1.49m](images/04_local_position_1.49m.jpg)
+
+### 演示视频
+
+见 [`video/demo_link.txt`](video/demo_link.txt)：
+<https://github.com/nzygng98/YESLab-Gazebo-VINS-PX4/blob/main/284ce96eb0f00d7f7c713d2fe0667554.mp4>
